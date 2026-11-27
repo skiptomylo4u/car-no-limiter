@@ -1,0 +1,31 @@
+# 公车预约限号提醒助手
+
+一个用于查询北京本地号牌车辆尾号限行并前往「机关服务平台」预约公车的静态 PWA。使用北京时间，支持近三日与未来日期查询。
+
+## 本地预览与发布
+
+运行 `python3 -m http.server 8000 --directory docs`，访问 `http://localhost:8000/`。在 GitHub 仓库 **Settings → Pages** 选择 **Deploy from a branch**，发布目录设为 **main → /docs**。部署后使用 HTTPS 地址访问，支持添加到手机主屏幕。曾在线成功打开的设备可以使用缓存，但网页会标出更新失败。
+
+Android 可在支持该功能的浏览器菜单中安装网页应用或添加至桌面。鸿蒙可在华为浏览器选择「添加至桌面」创建网页入口。
+
+## 维护限行数据
+
+`docs/rules.json` 包含北京市政府的轮换通告、国务院节假日日历和北京交管的节假日豁免公告。日常查询自动计算，网页打开或恢复到前台时重新请求 JSON。新一年度政策、放假安排或临时交通公告发布后，维护者核对官方文件，更新相应条目及 `updated` 日期，提交后 Pages 会重新发布。超出已收录通告范围时提示「待公告」。缺少交管专项公告的平日假期显示「预计不限行」。
+
+- `policies` 各区间首尾日期均计入，`weekdays` 从周一到周五依次录入两个限行尾号。
+- `calendars` 录入年度节假日区间与周末调休上班日期。
+- `exemptions` 只录入当地交管公告已明确的尾号豁免及对应文件。
+
+限行查询按本地号牌车辆一般规则显示。通告中机关等公务用车采用全天停驶规定，具体车辆与节假日执行办法请与单位核实。
+
+## App 唤起
+
+`docs/app-links.json` 按平台配置 `entry` 和 `store`。`entry` 填平台方确认的浏览器入口，入口应能在 App 已安装时打开 App，并在未安装时引导至指定商店。Android Chrome 也接受带 `browser_fallback_url` 的 `intent:` 入口。`store` 填官方应用商店详情页，作为用户可主动选择的备用链接。
+
+Android 版 3.6.6 的 APK 声明了浏览器入口 `jgj://jgjapp`。当浏览器标识为 Google Chrome 时，按钮优先使用带应用宝回退地址的 Android Intent。其他 Android 浏览器直接访问 `direct` 的唤起链接，用户也能从按钮旁的提示打开应用商店。是否允许唤起由浏览器决定，具体落地页待真机确认。
+
+鸿蒙（HarmonyOS NEXT 7）版 HAP 包名为 `cn.wildfirechat.messenger.hollysmart.jg`。按钮点击后先尝试安卓沿用的 `jgj://jgjapp` 链接；1.2 秒内页面未切到后台，则回退到华为应用市场详情页（`harmony.entry` / `harmony.store`），由详情页的「打开」进入应用。原生鸿蒙若要从网页直达应用首页或预约页，仍需 APP 开发方在鸿蒙工程注册 Deep Linking 或 App Linking 链接后填入 `harmony.entry`。
+
+iOS Safari 的顶部系统横幅可处理已安装和未安装两种情况。预约按钮在 `entry` 缺失时展示备用说明。在各平台浏览器和桌面图标的打开场景下，应分别验证已安装和未安装两种情况。
+
+修改网站外壳或资源清单时，将 `docs/sw.js` 中的缓存版本递增。只修改规则或唤起配置无需调整缓存版本。
